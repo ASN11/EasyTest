@@ -1,6 +1,8 @@
 package astracode.easytest.views;
 
+import astracode.easytest.dto.TestCaseDTO;
 import astracode.easytest.model.TestCase;
+import astracode.easytest.rest.JsonSender;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
@@ -11,17 +13,22 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.Route;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 @Route("/add")
 public class TextAreaFormView extends VerticalLayout {
+
+    private final JsonSender jsonSender;
 
     private final TextArea codeArea = new TextArea("Введите код");
     private final TextArea testArea = new TextArea("Введите код тестов");
     private final Button saveButton = new Button("Запустить тест");
     private final String MIN_HEIGHT = "600px";
 
-    public TextAreaFormView() {
+    @Autowired
+    public TextAreaFormView(JsonSender jsonSender) {
+        this.jsonSender = jsonSender;
         configureComponents();
         buildLayout();
     }
@@ -38,10 +45,14 @@ public class TextAreaFormView extends VerticalLayout {
                 String enteredTestText = testArea.getValue();
                 Notification.show("Код отправлен на тестирование");
 
-                TestCase testCase = new TestCase(enteredCodeText, enteredTestText);
-
+                TestCase testCase = convertToTestCase(new TestCaseDTO(enteredCodeText, enteredTestText));
+                jsonSender.sendJsonToServer(testCase);
             });
         }
+
+    private TestCase convertToTestCase(TestCaseDTO testCaseDTO) {
+        return new TestCase(testCaseDTO.getCodeText(), testCaseDTO.getTestText());
+    }
 
     private void configureDialog() {
         HorizontalLayout textAreaLayout = new HorizontalLayout(codeArea, testArea);
